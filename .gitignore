@@ -1,0 +1,7 @@
+*.elf
+*.hex
+*.map
+*.o
+*.pyc
+.venv
+.DS_Store
