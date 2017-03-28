@@ -17,7 +17,7 @@ while (1):
     response = sp.read(1)
     if response == 'O':
         print 'Ready|'
-    elif response == 'N':
+    elif response == 'S':
         print 'Need service!'
 
         # Update screen

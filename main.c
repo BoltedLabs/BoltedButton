@@ -7,89 +7,30 @@
 #include "USART.h"
 
 
-#define BUTTON_PORT     PORTC
-#define BUTTON_PIN      PINC
-#define BUTTON_ADDR     PC5
-#define LED_DDR         DDRB
-#define LED_PORT        PORTB
-#define LED_ADDR        PB4
-#define BUTTON_TIMING   500 /* In milliseconds */
-#define BUTTON_HOLD     5000 /* In milliseconds */
+#define BUTTON_PORT         PORTC
+#define BUTTON_PIN          PINC
+#define BUTTON_ADDR         PC5
+#define LED_DDR             DDRB
+#define LED_PORT            PORTB
+#define LED_ADDR            PB4
+#define ACTION_COOLDOWN     500 /* In milliseconds */
+#define BUTTON_TIMING       500 /* In milliseconds */
+#define BUTTON_HOLD         1000 /* In milliseconds */
+#define BUTTON_MAX_CLICKS   3
 
 
-// Global timer vars
-volatile uint32_t time_ms = 0;
-
-
-// Global status vars
-volatile uint32_t up_time = 0;
+volatile uint8_t listen = 0;
+volatile uint16_t time_ms = 0;
+volatile uint16_t cooldown_ms = 0;
+volatile uint8_t is_down = 0;
+volatile uint8_t is_up = 1;
 volatile uint8_t clicks = 0;
-volatile uint8_t click_type = 0;
 
 
 ISR(TIMER1_COMPA_vect)
 {
-    time_ms++;
-}
-
-
-void read_button(void)
-{
-    if (click_type == 0) {
-        uint32_t delta = time_ms - up_time;
-
-        if (bit_is_clear(BUTTON_PIN, BUTTON_ADDR)) {
-            if (up_time > 0 && delta <= BUTTON_TIMING) {
-                clicks++;
-            }
-
-            up_time = 0;
-        } else {
-            up_time = time_ms;
-        }
-
-        // Update click if has been too long
-        if (up_time > BUTTON_TIMING || clicks > 2) {
-            click_type = clicks;
-            clicks = 0;
-            up_time = 0;
-        }
-    }
-}
-
-
-void do_serial_stuff(void)
-{
-    if (click_type > 0) {
-        switch (click_type) {
-            case 1:
-                transmitByte('S');
-                break;
-            case 2:
-                transmitByte('D');
-                break;
-            case 3:
-                transmitByte('T');
-                break;
-            case 4:
-                transmitByte('H');
-                break;
-            default:
-                break;
-        }
-
-        // Reset click type
-        click_type = 0;
-
-        // Delay between actions
-        _delay_ms(500);
-    }
-}
-
-
-void do_led_stuff(void)
-{
-
+    if (listen) time_ms++;
+    if (cooldown_ms > 0) cooldown_ms--;
 }
 
 
@@ -104,17 +45,76 @@ int main(void)
     TCCR1A = 0;
     TCCR1B = 0;
 
-    OCR1A = 131;
+    OCR1A = 15;
     TCCR1B |= (1 << WGM12);
     TCCR1B |= (1 << CS10);
     TCCR1B |= (1 << CS12);
     TIMSK1 |= (1 << OCIE1A);
     sei();
 
+    // Ready!
+    transmitByte('O');
+
     for(;;) {
-        read_button();
-        do_serial_stuff();
-        do_led_stuff();
+        // Wait for cooldown
+        if (!cooldown_ms) {
+            if (bit_is_clear(PINC, PC5)) {
+                // Add clicks
+                if (listen && time_ms <= BUTTON_TIMING) {
+                    if (is_up) {
+                        time_ms = 0;
+                        if (++clicks >= BUTTON_MAX_CLICKS) {
+                            listen = 0;
+                            cooldown_ms = ACTION_COOLDOWN;
+                        }
+                    }
+                } else {
+                    // First click
+                    time_ms = 0;
+                    clicks = 1;
+                    listen = 1;
+                }
+
+                // Holding button down
+                if (listen && clicks == 1 && time_ms >= BUTTON_HOLD) {
+                    transmitByte('H');
+                    listen = 0;
+                    cooldown_ms = ACTION_COOLDOWN;
+                }
+
+                is_up = 0;
+                is_down = 1;
+            } else {
+                // Reset
+                if (time_ms >= BUTTON_TIMING) {
+                    time_ms = 0;
+                    listen = 0;
+                    cooldown_ms = ACTION_COOLDOWN;
+                }
+
+                is_up = 1;
+                is_down = 0;
+            }
+        }
+
+        // Transmit data
+        if (clicks > 0 && !listen) {
+            switch (clicks) {
+                case 1:
+                    transmitByte('S');
+                    break;
+                case 2:
+                    transmitByte('D');
+                    break;
+                case 3:
+                    transmitByte('T');
+                    break;
+                default:
+                    break;
+            }
+
+            clicks = 0;
+        }
     }
 
     return 0;

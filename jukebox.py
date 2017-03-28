@@ -2,6 +2,7 @@
 import serial
 import subprocess
 import time
+import sys
 
 
 # SERIAL_PORT = '/dev/cu.usbserial-A5050PKK' # USB FTDI
@@ -11,19 +12,31 @@ BAUD_RATE = 57600
 sp = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout = 5)
 sp.flush()
 
-while (1):
-    response = sp.read(1)
-    if response == 'O':
-        print 'Ready|'
-    elif response == 'N':
-        print 'Skipping song...'
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        music_service = sys.argv[1]
+    else:
+        music_service = 'itunes'
 
-        script = """/usr/bin/osascript<<END
-        tell application "iTunes"
-            next track
-        end tell
-        END"""
-        subprocess.call(script, shell=True)
+    while (1):
+        response = sp.read(1)
+        if response == 'O':
+            print 'Ready|'
+        elif response == 'S':
+            print 'Skipping song...'
 
-        # Stall for next skip.
-        time.sleep(0.3)
+            if music_service == 'spotify':
+                script = """/usr/bin/osascript<<END
+                tell application "Spotify" to next track
+                END"""
+            else:
+                script = """/usr/bin/osascript<<END
+                tell application "iTunes"
+                    next track
+                end tell
+                END"""
+
+            subprocess.call(script, shell=True)
+
+            # Stall for next skip.
+            time.sleep(0.3)
