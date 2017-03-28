@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     while (1):
         response = sp.read(1)
-        if response == 'O':
+        if response == 'R':
             print 'Ready|'
         elif response == 'S':
             print 'Skipping song...'

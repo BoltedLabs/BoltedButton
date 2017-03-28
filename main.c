@@ -25,12 +25,16 @@ volatile uint16_t cooldown_ms = 0;
 volatile uint8_t is_down = 0;
 volatile uint8_t is_up = 1;
 volatile uint8_t clicks = 0;
+volatile char led_command = 0;
+volatile uint16_t flash_interval = 0;
+volatile uint16_t led_ms = 0;
 
 
 ISR(TIMER1_COMPA_vect)
 {
     if (listen) time_ms++;
     if (cooldown_ms > 0) cooldown_ms--;
+    if (flash_interval) led_ms++;
 }
 
 
@@ -53,7 +57,7 @@ int main(void)
     sei();
 
     // Ready!
-    transmitByte('O');
+    transmitByte('R');
 
     for(;;) {
         // Wait for cooldown
@@ -115,6 +119,40 @@ int main(void)
             }
 
             clicks = 0;
+        }
+
+        // Receive commands
+        if (bit_is_set(UCSR0A, RXC0)) {
+            led_command = UDR0;
+            // Clear flash
+            flash_interval = 0;
+            led_ms = 0;
+
+            switch (led_command) {
+                case 'O':
+                    LED_PORT |= (1 << LED_ADDR);
+                    break;
+                case 'N':
+                    LED_PORT &= ~(1 << LED_ADDR);
+                    break;
+                case 'F':
+                    if (bit_is_set(UCSR0A, RXC0)) {
+                        flash_interval = getNumber() * 100;
+                    } else {
+                        flash_interval = 300;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Flash LED
+        if (flash_interval) {
+            if (led_ms >= flash_interval) {
+                led_ms = 0;
+                LED_PORT ^= (1 << LED_ADDR);
+            }
         }
     }
 

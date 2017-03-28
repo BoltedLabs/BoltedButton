@@ -15,7 +15,7 @@ sp.flush()
 
 while (1):
     response = sp.read(1)
-    if response == 'O':
+    if response == 'R':
         print 'Ready|'
     elif response == 'S':
         print 'Need service!'

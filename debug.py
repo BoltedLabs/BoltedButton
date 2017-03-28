@@ -13,3 +13,11 @@ while (1):
     response = sp.read(1)
     if response:
         print response
+
+        if response == 'S':
+            sp.write('O')
+        if response == 'D':
+            sp.write('N')
+        if response == 'T':
+            sp.write('F')
+            sp.write('5')
