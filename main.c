@@ -68,7 +68,7 @@ int main(void)
                             cooldown_ms = ACTION_COOLDOWN;
                         }
                     }
-                } else {
+                } else if (!listen && is_up) {
                     // First click
                     time_ms = 0;
                     clicks = 1;
@@ -79,6 +79,7 @@ int main(void)
                 if (listen && clicks == 1 && time_ms >= BUTTON_HOLD) {
                     transmitByte('H');
                     listen = 0;
+                    clicks = 0;
                     cooldown_ms = ACTION_COOLDOWN;
                 }
 
