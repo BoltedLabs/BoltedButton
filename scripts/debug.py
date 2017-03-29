@@ -1,6 +1,5 @@
 """Listens on a serial connection for byte combinations to control service"""
 import serial
-import time
 
 
 SERIAL_PORT = '/dev/cu.usbserial-A5050PKK' # USB FTDI
