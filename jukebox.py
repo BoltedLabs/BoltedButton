@@ -12,6 +12,8 @@ BAUD_RATE = 57600
 sp = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout = 5)
 sp.flush()
 
+script = ''
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         music_service = sys.argv[1]
@@ -35,8 +37,16 @@ if __name__ == '__main__':
                     next track
                 end tell
                 END"""
+        elif response == 'D':
+            script = """/usr/bin/osascript<<END
+            tell application "iTunes"
+            	playpause
+            end tell
+            END"""
+            sp.write('F3\r'.encode('utf-8'))
 
+        if script:
             subprocess.call(script, shell=True)
 
             # Stall for next skip.
-            time.sleep(0.3)
+            time.sleep(0.5)

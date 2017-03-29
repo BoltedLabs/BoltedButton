@@ -1,5 +1,6 @@
 """Listens on a serial connection for byte combinations to control service"""
 import serial
+import time
 
 
 SERIAL_PORT = '/dev/cu.usbserial-A5050PKK' # USB FTDI
@@ -19,5 +20,4 @@ while (1):
         if response == 'D':
             sp.write('N')
         if response == 'T':
-            sp.write('F')
-            sp.write('5')
+            sp.write('F5\r'.encode('utf-8'))

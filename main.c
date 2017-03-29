@@ -7,16 +7,17 @@
 #include "USART.h"
 
 
-#define BUTTON_PORT         PORTC
-#define BUTTON_PIN          PINC
-#define BUTTON_ADDR         PC5
-#define LED_DDR             DDRB
-#define LED_PORT            PORTB
-#define LED_ADDR            PB4
-#define ACTION_COOLDOWN     500 /* In milliseconds */
-#define BUTTON_TIMING       500 /* In milliseconds */
-#define BUTTON_HOLD         1000 /* In milliseconds */
-#define BUTTON_MAX_CLICKS   3
+#define BUTTON_PORT             PORTC
+#define BUTTON_PIN              PINC
+#define BUTTON_ADDR             PC5
+#define LED_DDR                 DDRB
+#define LED_PORT                PORTB
+#define LED_ADDR                PB4
+#define ACTION_COOLDOWN         500 /* In milliseconds */
+#define BUTTON_TIMING           500 /* In milliseconds */
+#define BUTTON_HOLD             1000 /* In milliseconds */
+#define BUTTON_MAX_CLICKS       3
+#define INTERVAL_WAIT_TIMEOUT   1000
 
 
 volatile uint8_t listen = 0;
@@ -57,6 +58,7 @@ int main(void)
     sei();
 
     // Ready!
+    LED_PORT &= ~(1 << LED_ADDR);
     transmitByte('R');
 
     for(;;) {
@@ -136,11 +138,7 @@ int main(void)
                     LED_PORT &= ~(1 << LED_ADDR);
                     break;
                 case 'F':
-                    if (bit_is_set(UCSR0A, RXC0)) {
-                        flash_interval = getNumber() * 100;
-                    } else {
-                        flash_interval = 300;
-                    }
+                    flash_interval = getNumber() * 100;
                     break;
                 default:
                     break;
