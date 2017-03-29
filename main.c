@@ -1,5 +1,5 @@
-/*
- *
+/* Bolted Button
+ * Developed by Bolted
  */
 #include <avr/io.h>
 #include <avr/interrupt.h>
