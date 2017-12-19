@@ -35,8 +35,8 @@ while (1):
                 try:
                     # Send text
                     message = client.messages.create(body="Need service!",
-                        to="+15592732020",
-                        from_="+15592037862")
+                        to=os.environ.get('TWILIO_TO', '+15555555555'),
+                        from_=os.environ.get('TWILIO_FROM', '+15555555556'))
 
                     print(message.sid)
                 except twilio.TwilioRestException as e:
